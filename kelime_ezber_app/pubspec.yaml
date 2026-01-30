@@ -1,0 +1,38 @@
+name: kelime_ezber_app
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+2
+
+environment:
+  sdk: ^3.10.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.5+1
+  file_picker: ^10.3.10
+  google_fonts: ^8.0.0
+  flutter_card_swiper: ^7.2.0
+  hive_flutter: ^1.1.0
+  syncfusion_flutter_pdf: ^24.1.41 # PDF okumak için
+  archive: ^3.3.7                  # Word (.docx) dosyasını açmak için
+  xml: ^6.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  # İkon paketi buraya eklendi
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+
+# --- İKON AYARLARI ---
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/icon.png"
+  min_sdk_android: 21
