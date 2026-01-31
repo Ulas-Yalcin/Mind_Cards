@@ -1,9 +1,9 @@
 // lib/providers/game_provider.dart
 import 'dart:io';
+import 'dart:convert'; // ÖNEMLİ: Türkçe karakterler için bu kütüphane şart
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-// PDF ve Word işlemleri için yeni kütüphaneler
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:archive/archive.dart';
 import 'package:xml/xml.dart';
@@ -140,7 +140,6 @@ class GameProvider extends ChangeNotifier {
   Future<int> loadFromFile(Language language, {String? targetCategory}) async {
     int addedCount = 0;
     try {
-      // 1. Dosya Seçici (TXT, PDF, DOCX izin ver)
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['txt', 'pdf', 'docx'],
@@ -154,14 +153,15 @@ class GameProvider extends ChangeNotifier {
 
         // 2. Dosya Türüne Göre İçeriği Oku
         if (extension == 'txt') {
-          lines = await file.readAsLines();
+          // TXT dosyaları için UTF-8 zorlaması
+          lines = await file.readAsLines(encoding: utf8);
         } else if (extension == 'pdf') {
           lines = await _readPdfFile(file);
         } else if (extension == 'docx') {
           lines = await _readDocxFile(file);
         }
 
-        // 3. Okunan satırları işle (Kelime=Anlamı)
+        // 3. Okunan satırları işle
         List<Flashcard> newCards = [];
         for (String line in lines) {
           if (line.trim().isEmpty || !line.contains('=')) continue;
@@ -207,17 +207,15 @@ class GameProvider extends ChangeNotifier {
     return addedCount;
   }
 
-  // --- YARDIMCI: PDF Okuma Fonksiyonu ---
+  // --- YARDIMCI: PDF Okuma ---
   Future<List<String>> _readPdfFile(File file) async {
     try {
       final List<int> bytes = await file.readAsBytes();
       final PdfDocument document = PdfDocument(inputBytes: bytes);
 
-      // PDF'teki tüm metni çıkar
       String text = PdfTextExtractor(document).extractText();
       document.dispose();
 
-      // Satırlara böl
       return text.split('\n');
     } catch (e) {
       debugPrint("PDF Hatası: $e");
@@ -225,20 +223,22 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  // --- YARDIMCI: DOCX (Word) Okuma Fonksiyonu ---
+  // --- YARDIMCI: DOCX (Word) Okuma ---
+  // BURASI GÜNCELLENDİ (UTF8 DECODE EKLENDİ)
   Future<List<String>> _readDocxFile(File file) async {
     try {
       final bytes = await file.readAsBytes();
       final archive = ZipDecoder().decodeBytes(bytes);
 
-      // Word dosyasının içindeki asıl metin 'word/document.xml' dosyasındadır
       final contentFile = archive.findFile('word/document.xml');
       if (contentFile == null) return [];
 
-      final contentXml = String.fromCharCodes(contentFile.content);
+      // DÜZELTME: fromCharCodes yerine utf8.decode kullanıyoruz.
+      // Bu, Türkçe karakterlerin doğru çözülmesini sağlar.
+      final contentXml = utf8.decode(contentFile.content);
+
       final document = XmlDocument.parse(contentXml);
 
-      // Paragrafları (<w:p>) bul ve metinleri birleştir
       List<String> extractedLines = [];
       final paragraphs = document.findAllElements('w:p');
 
